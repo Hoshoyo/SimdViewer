@@ -109,10 +109,61 @@ simd_multiply(SimdViewer* sv)
 }
 
 void
-simd_compare_string(SimdViewer* sv)
+simd_add_float256(SimdViewer* sv)
 {
-	//_mm_cmpestrz()
+	simd_viewer_push_highlighter(sv);
 
+#if 0
+	__m256 value0 = _mm256_set_ps(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f);
+	simd_viewer_pushf(sv, value0, REGISTER_TYPE_F32);
+
+	__m256 value1 = _mm256_set_ps(10.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f);
+	simd_viewer_pushf(sv, value1, REGISTER_TYPE_F32);
+
+	__m256 result = _mm256_add_ps(value0, value1);
+	simd_viewer_push_operation(sv, REGISTER_TYPE_F32, "_mm256_add_ps");
+	simd_viewer_pushf_bold(sv, result, REGISTER_TYPE_F32);
+#else
+	__m256d value0 = _mm256_set_pd(1.0, 2.0, 3.0, 4.0);
+	simd_viewer_pushd(sv, value0, REGISTER_TYPE_F64);
+
+	__m256d value1 = _mm256_set_pd(10.0, 12.0, 13.0, 14.0);
+	simd_viewer_pushd(sv, value1, REGISTER_TYPE_F64);
+
+	__m256d result = _mm256_add_pd(value0, value1);
+	simd_viewer_push_operation(sv, REGISTER_TYPE_F64, "_mm256_add_pd");
+	simd_viewer_pushd_bold(sv, result, REGISTER_TYPE_F64);
+#endif
+}
+
+void
+simd_add_int128(SimdViewer* sv)
+{
+	simd_viewer_push_highlighter(sv);
+
+	__m128i value0 = _mm_set_epi32(1, 2, 3, 4);
+	simd_viewer_push128(sv, value0, REGISTER_TYPE_S32);
+	__m128i value1 = _mm_set_epi32(5, 6, 7, 8);
+	simd_viewer_push128(sv, value1, REGISTER_TYPE_S32);
+	
+	__m128i result = _mm_add_epi32(value0, value1);
+	simd_viewer_push_operation(sv, REGISTER_TYPE_S32, "_mm_add_epi32");
+	simd_viewer_push128_bold(sv, result, REGISTER_TYPE_S32);
+}
+
+void
+simd_add_float128(SimdViewer* sv)
+{
+	simd_viewer_push_highlighter(sv);
+
+	__m128 value0 = _mm_set_ps(1.0f, 2.0f, 3.0f, 4.0f);
+	simd_viewer_push128f(sv, value0, REGISTER_TYPE_F32);
+	__m128 value1 = _mm_set_ps(5.0f, 6.0f, 7.0f, 8.0f);
+	simd_viewer_push128f(sv, value1, REGISTER_TYPE_F32);
+
+	__m128 result = _mm_add_ps(value0, value1);
+	simd_viewer_push_operation(sv, REGISTER_TYPE_F32, "_mm_add_ps");
+	simd_viewer_push128f_bold(sv, result, REGISTER_TYPE_F32);
 }
 
 int main()
@@ -132,12 +183,19 @@ int main()
 
 		ClearBackground(BACKGROUND_COLOR);
 
-		simd_unpack(&sv);
-		//simd_compare(&sv);
-		//simd_average(&sv);
-		//simd_movehdup(&sv);
-		//simd_multiply(&sv);
-		//simd_compare_string(&sv);
+		{
+			// Examples, uncomment to see
+			simd_unpack(&sv);
+			//simd_compare(&sv);
+			//simd_average(&sv);
+			//simd_movehdup(&sv);
+			//simd_multiply(&sv);
+			//simd_compare_string(&sv);
+			simd_add_float256(&sv);
+			//simd_add_int128(&sv);
+			//simd_add_float128(&sv);
+		}
+
 		simd_viewer_flush(&sv);
 
 		EndDrawing();

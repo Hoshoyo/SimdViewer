@@ -24,6 +24,9 @@ typedef enum {
 	REGISTER_TYPE_U16,
 	REGISTER_TYPE_U32,
 	REGISTER_TYPE_U64,
+
+	REGISTER_TYPE_F32,
+	REGISTER_TYPE_F64,
 } RegisterType;
 
 typedef enum {
@@ -87,19 +90,30 @@ void simd_viewer_init(SimdViewer* simd_viewer);
 // Flush
 void simd_viewer_flush(SimdViewer* simd_viewer);
 
+// ----------------------------------------------------------------------------------------------
 // Push
-void simd_viewer_push(SimdViewer* simd_viewer, __m256i reg, RegisterType regtype);
-void simd_viewer_push_bold(SimdViewer* simd_viewer, __m256i reg, RegisterType regtype);
+
+// Helpers and Markers
+void simd_viewer_push_highlighter(SimdViewer* simd_viewer);
 void simd_viewer_push_operation(SimdViewer* simd_viewer, RegisterType regtype, const char* name);
 void simd_viewer_push_empty(SimdViewer* simd_viewer);
 
-void simd_viewer_pushf(SimdViewer* simd_viewer, __m256 reg, FRegisterType regtype);
+// 256 bits
+void simd_viewer_push(SimdViewer* simd_viewer, __m256i reg, RegisterType regtype);
+void simd_viewer_push_bold(SimdViewer* simd_viewer, __m256i reg, RegisterType regtype);
+void simd_viewer_pushf(SimdViewer* simd_viewer, __m256 reg, RegisterType regtype);
 void simd_viewer_pushf_bold(SimdViewer* simd_viewer, __m256 reg, FRegisterType regtype);
+void simd_viewer_pushd(SimdViewer* simd_viewer, __m256d reg, RegisterType regtype);
+void simd_viewer_pushd_bold(SimdViewer* simd_viewer, __m256d reg, RegisterType regtype);
 
+// 128 bits
 void simd_viewer_push128(SimdViewer* simd_viewer, __m128i reg, RegisterType regtype);
+void simd_viewer_push128f(SimdViewer* simd_viewer, __m128 reg, RegisterType regtype);
+void simd_viewer_push128_bold(SimdViewer* simd_viewer, __m128i reg, RegisterType regtype);
+void simd_viewer_push128f_bold(SimdViewer* simd_viewer, __m128 reg, RegisterType regtype);
 
-void simd_viewer_push_highlighter(SimdViewer* simd_viewer);
 
+// ----------------------------------------------------------------------------------------------
 // Rendering
 void simd_viewer_reset_flags(SimdViewer* simd_viewer);
 void simd_viewer_set_hexadecimal_render(SimdViewer* simd_viewer);

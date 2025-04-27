@@ -1,4 +1,5 @@
 #include "simd_viewer.h"
+#include <assert.h>
 
 #define ARRAY_LENGTH(A) (sizeof(A) / sizeof(*(A)))
 
@@ -69,10 +70,12 @@ regtype_to_bytesize(RegisterType regtype)
 	switch (regtype)
 	{
 	default:
-		case REGISTER_TYPE_S8:case REGISTER_TYPE_U8: return sizeof(int8_t);
-		case REGISTER_TYPE_S16:case REGISTER_TYPE_U16: return sizeof(int16_t);
-		case REGISTER_TYPE_S32:case REGISTER_TYPE_U32: return sizeof(int32_t);
-		case REGISTER_TYPE_S64:case REGISTER_TYPE_U64: return sizeof(int64_t);
+		case REGISTER_TYPE_S8:  case REGISTER_TYPE_U8: return sizeof(int8_t);
+		case REGISTER_TYPE_S16: case REGISTER_TYPE_U16: return sizeof(int16_t);
+		case REGISTER_TYPE_S32: case REGISTER_TYPE_U32: return sizeof(int32_t);
+		case REGISTER_TYPE_S64: case REGISTER_TYPE_U64: return sizeof(int64_t);
+		case REGISTER_TYPE_F32: return sizeof(float);
+		case REGISTER_TYPE_F64: return sizeof(double);
 	}
 }
 
@@ -136,177 +139,6 @@ render_text_rightalign(Vector2 pos, Font font, const char* text, int width)
 	DrawTextEx(font, text, Vector2Add(pos, (Vector2) { width - measure.x - 4, BYTE_SIZE / 2 - measure.y / 2 }), (float)font.baseSize, 0, FONT_COLOR);
 }
 
-#if 0
-AnyValue
-render_register256(SimdViewer* sv, Vector2 pos, __m256i x, RegisterType rtype, RenderFlag flag)
-{
-	uint32_t highlight_size = sv->highlight_size;
-	AnyValue render_hovered = sv->hovered;
-	Font font = sv->font;
-
-	Vector2 initial_pos = pos;
-
-	bool hex = flag & SIMD_VIEWER_RENDER_HEX;
-
-	if (flag & SIMD_VIEWER_RENDER_BORDER)
-	{
-		Vector2 border_pos = (Vector2){ pos.x - BORDER_SIZE, pos.y - BORDER_SIZE };
-		Rectangle border_rect = (Rectangle){ .x = pos.x - BORDER_SIZE, .y = pos.y - BORDER_SIZE, .width = (float)(box_width(sizeof(__m256i)) + BORDER_SIZE * 2), BYTE_SIZE + BORDER_SIZE * 2 };
-		DrawRectangleLinesEx(border_rect, BORDER_SIZE, (Color) { 0x20, 0x20, 0x20, 0xff });
-	}
-
-	Vector2 mouse = GetMousePosition();
-	Rectangle rect = { 0 };
-	AnyValue hovered_value = { 0 };
-
-	switch (rtype)
-	{
-		case REGISTER_TYPE_S8: {
-			for (int i = sizeof(__m256i) - 1; i >= 0; --i)
-			{
-				if (flag & SIMD_VIEWER_RENDER_VALUE_INTENSITY)
-					rect = render_box_colored(pos, sizeof(int8_t), (Color){ x.m256i_u8[i], x.m256i_u8[i], x.m256i_u8[i], 255 });
-				else
-					rect = render_box_highlight(pos, sizeof(int8_t), render_hovered.type == rtype && x.m256i_i8[i] == render_hovered.s8val);
-				render_text_rightalign(pos, font, TextFormat(fmt_signed(hex), x.m256i_i8[i]), box_width(sizeof(int8_t)));
-
-				pos = Vector2Add(pos, (Vector2) { BYTE_SIZE + SPACING, 0 });
-
-				if (CheckCollisionPointRec(mouse, rect))
-				{
-					hovered_value.s8val = x.m256i_i8[i];
-					hovered_value.type = rtype;
-				}
-			}
-		} break;
-		case REGISTER_TYPE_U8: {
-			for (int i = sizeof(__m256i) - 1; i >= 0; --i)
-			{
-				if (flag & SIMD_VIEWER_RENDER_VALUE_INTENSITY)
-					rect = render_box_colored(pos, sizeof(int8_t), (Color) { x.m256i_u8[i], x.m256i_u8[i], x.m256i_u8[i], 255 });
-				else
-					rect = render_box_highlight(pos, sizeof(uint8_t), render_hovered.type == rtype && x.m256i_u8[i] == render_hovered.u8val);
-				render_text_rightalign(pos, font, TextFormat(fmt_unsigned(hex), x.m256i_u8[i]), box_width(sizeof(uint8_t)));
-
-				pos = Vector2Add(pos, (Vector2) { BYTE_SIZE + SPACING, 0 });
-
-				if (CheckCollisionPointRec(mouse, rect))
-				{
-					hovered_value.u8val = x.m256i_u8[i];
-					hovered_value.type = rtype;
-				}
-			}
-		} break;
-		case REGISTER_TYPE_S16: {
-			for (int i = sizeof(__m256i) / sizeof(int16_t) - 1; i >= 0; --i)
-			{
-				rect = render_box(pos, sizeof(int16_t));
-				render_text_rightalign(pos, font, TextFormat(fmt_signed(hex), x.m256i_i16[i]), box_width(sizeof(int16_t)));
-
-				pos = Vector2Add(pos, (Vector2) { (BYTE_SIZE + SPACING) * sizeof(int16_t), 0 });
-
-				if (CheckCollisionPointRec(mouse, rect))
-				{
-					hovered_value.s16val = x.m256i_i16[i];
-					hovered_value.type = rtype;
-				}
-			}
-		} break;
-		case REGISTER_TYPE_U16: {
-			for (int i = sizeof(__m256i) / sizeof(uint16_t) - 1; i >= 0; --i)
-			{
-				rect = render_box(pos, sizeof(int16_t));
-				render_text_rightalign(pos, font, TextFormat(fmt_unsigned(hex), x.m256i_u16[i]), box_width(sizeof(int16_t)));
-
-				pos = Vector2Add(pos, (Vector2) { (BYTE_SIZE + SPACING) * sizeof(int16_t), 0 });
-
-				if (CheckCollisionPointRec(mouse, rect))
-				{
-					hovered_value.u16val = x.m256i_u16[i];
-					hovered_value.type = rtype;
-				}
-			}
-		} break;
-		case REGISTER_TYPE_S32: {
-			for (int i = sizeof(__m256i) / sizeof(int32_t) - 1; i >= 0; --i)
-			{
-				rect = render_box(pos, sizeof(int32_t));
-				render_text_rightalign(pos, font, TextFormat(fmt_signed(hex), x.m256i_i32[i]), box_width(sizeof(int32_t)));
-
-				pos = Vector2Add(pos, (Vector2) { (BYTE_SIZE + SPACING) * sizeof(int32_t), 0 });
-
-				if (CheckCollisionPointRec(mouse, rect))
-				{
-					hovered_value.s32val = x.m256i_i32[i];
-					hovered_value.type = rtype;
-				}
-			}
-		} break;
-		case REGISTER_TYPE_U32: {
-			for (int i = sizeof(__m256i) / sizeof(uint32_t) - 1; i >= 0; --i)
-			{
-				rect = render_box(pos, sizeof(uint32_t));
-				render_text_rightalign(pos, font, TextFormat(fmt_unsigned(hex), x.m256i_u32[i]), box_width(sizeof(uint32_t)));
-
-				pos = Vector2Add(pos, (Vector2) { (BYTE_SIZE + SPACING) * sizeof(uint32_t), 0 });
-
-				if (CheckCollisionPointRec(mouse, rect))
-				{
-					hovered_value.u32val = x.m256i_u32[i];
-					hovered_value.type = rtype;
-				}
-			}
-		} break;
-		case REGISTER_TYPE_S64: {
-			for (int i = sizeof(__m256i) / sizeof(int64_t) - 1; i >= 0; --i)
-			{
-				rect = render_box(pos, sizeof(int64_t));
-				render_text_rightalign(pos, font, TextFormat(fmt_signed64(hex), x.m256i_i64[i]), box_width(sizeof(int64_t)));
-
-				pos = Vector2Add(pos, (Vector2) { (BYTE_SIZE + SPACING) * sizeof(int64_t), 0 });
-
-				if (CheckCollisionPointRec(mouse, rect))
-				{
-					hovered_value.s64val = x.m256i_i64[i];
-					hovered_value.type = rtype;
-				}
-			}
-		} break;
-		case REGISTER_TYPE_U64: {
-			for (int i = sizeof(__m256i) / sizeof(uint64_t) - 1; i >= 0; --i)
-			{
-				rect = render_box(pos, sizeof(uint64_t));
-				render_text_rightalign(pos, font, TextFormat(fmt_unsigned64(hex), x.m256i_u64[i]), box_width(sizeof(uint64_t)));
-
-				pos = Vector2Add(pos, (Vector2) { (BYTE_SIZE + SPACING) * sizeof(uint64_t), 0 });
-
-				if (CheckCollisionPointRec(mouse, rect))
-				{
-					hovered_value.u64val = x.m256i_u64[i];
-					hovered_value.type = rtype;
-				}
-			}
-		} break;
-	}
-
-	if (flag & SIMD_VIEWER_RENDER_HIGHLIGHT && highlight_size > 0)
-	{
-		Vector2 sz_pos = initial_pos;
-		Color highlight_color = GOLD;
-		highlight_color.a = 60;
-
-		for (int i = 0; i < sizeof(__m256) / highlight_size; ++i)
-		{
-			if (i % 2 == 0)
-				render_box_colored(sz_pos, highlight_size, highlight_color);
-			sz_pos = Vector2Add(sz_pos, (Vector2) { (BYTE_SIZE + SPACING) * highlight_size, 0 });
-		}
-	}
-
-	return hovered_value;
-}
-#endif
-
 const char*
 text_for_register_lane(AnyValue value, int32_t index, bool hex)
 {
@@ -324,6 +156,8 @@ text_for_register_lane(AnyValue value, int32_t index, bool hex)
 				case REGISTER_TYPE_U16: return TextFormat(view_format, value.i128.m128i_u16[index]);
 				case REGISTER_TYPE_U32: return TextFormat(view_format, value.i128.m128i_u32[index]);
 				case REGISTER_TYPE_U64: return TextFormat(view_format, value.i128.m128i_u64[index]);
+				case REGISTER_TYPE_F32: return TextFormat("%f", value.f128.m128_f32[index]);
+				case REGISTER_TYPE_F64: return TextFormat("%f", value.f128d.m128d_f64[index]);
 			}
 		} break;
 		case 256: {
@@ -337,6 +171,8 @@ text_for_register_lane(AnyValue value, int32_t index, bool hex)
 				case REGISTER_TYPE_U16: return TextFormat(view_format, value.i256.m256i_u16[index]);
 				case REGISTER_TYPE_U32: return TextFormat(view_format, value.i256.m256i_u32[index]);
 				case REGISTER_TYPE_U64: return TextFormat(view_format, value.i256.m256i_u64[index]);
+				case REGISTER_TYPE_F32: return TextFormat("%f", value.f256.m256_f32[index]);
+				case REGISTER_TYPE_F64: return TextFormat("%f", value.f256d.m256d_f64[index]);
 			}
 		} break;
 	}
@@ -344,7 +180,7 @@ text_for_register_lane(AnyValue value, int32_t index, bool hex)
 	return "";
 }
 
-#define EXTRACT_FUNCTION(SIZE, SIGN)  inline uint8_t             \
+#define EXTRACT_FUNCTION(TYPE, SIZE, SIGN)  inline TYPE          \
 extract_##SIGN##SIZE(AnyValue value, int32_t index)              \
 {                                                                \
 	switch (value.register_size_bytes * 8)                       \
@@ -354,14 +190,34 @@ extract_##SIGN##SIZE(AnyValue value, int32_t index)              \
 	}                                                            \
 }
 
-EXTRACT_FUNCTION(8, i)
-EXTRACT_FUNCTION(8, u)
-EXTRACT_FUNCTION(16, i)
-EXTRACT_FUNCTION(16, u)
-EXTRACT_FUNCTION(32, i)
-EXTRACT_FUNCTION(32, u)
-EXTRACT_FUNCTION(64, i)
-EXTRACT_FUNCTION(64, u)
+EXTRACT_FUNCTION(int8_t, 8, i)
+EXTRACT_FUNCTION(uint8_t, 8, u)
+EXTRACT_FUNCTION(int16_t, 16, i)
+EXTRACT_FUNCTION(uint16_t, 16, u)
+EXTRACT_FUNCTION(int32_t, 32, i)
+EXTRACT_FUNCTION(uint32_t, 32, u)
+EXTRACT_FUNCTION(int64_t, 64, i)
+EXTRACT_FUNCTION(uint64_t, 64, u)
+
+inline float
+extract_f32(AnyValue value, int32_t index)
+{
+	switch (value.register_size_bytes * 8)
+	{
+		case 128: return value.f128.m128_f32[index];
+		case 256: return value.f256.m256_f32[index];
+	}
+}
+
+inline double
+extract_f64(AnyValue value, int32_t index)
+{
+	switch (value.register_size_bytes * 8)
+	{
+		case 128: return value.f128d.m128d_f64[index];
+		case 256: return value.f256d.m256d_f64[index];
+	}
+}
 
 bool
 same_value(AnyValue value, int32_t index, AnyValue compared, int32_t compared_index)
@@ -379,6 +235,8 @@ same_value(AnyValue value, int32_t index, AnyValue compared, int32_t compared_in
 		case REGISTER_TYPE_U32: return extract_u32(value, index) == extract_u32(compared, compared_index);
 		case REGISTER_TYPE_S64: return extract_i64(value, index) == extract_i64(compared, compared_index);
 		case REGISTER_TYPE_U64: return extract_u64(value, index) == extract_u64(compared, compared_index);
+		case REGISTER_TYPE_F32: return extract_f32(value, index) == extract_f32(compared, compared_index);
+		case REGISTER_TYPE_F64: return extract_f64(value, index) == extract_f64(compared, compared_index);
 	}
 
 	return false;
@@ -500,6 +358,7 @@ simd_viewer_flush(SimdViewer* simd_viewer)
 AnyValue
 make_anyvalue_from_i256(__m256i value, RegisterType regtype)
 {
+	assert(regtype >= REGISTER_TYPE_S8 && regtype <= REGISTER_TYPE_U64 && "Register type must be integer type");
 	AnyValue result = {
 		.type = regtype,
 		.register_size_bytes = sizeof(__m256i),
@@ -508,10 +367,59 @@ make_anyvalue_from_i256(__m256i value, RegisterType regtype)
 	return result;
 }
 
+AnyValue
+make_anyvalue_from_f256(__m256 value, RegisterType regtype)
+{
+	assert(regtype >= REGISTER_TYPE_F32 && regtype <= REGISTER_TYPE_F64 && "Register type must be float type");
+	AnyValue result = {
+		.type = regtype,
+		.register_size_bytes = sizeof(__m256),
+		.f256 = value,
+	};
+	return result;
+}
+
+AnyValue
+make_anyvalue_from_f256d(__m256d value, RegisterType regtype)
+{
+	assert(regtype >= REGISTER_TYPE_F32 && regtype <= REGISTER_TYPE_F64 && "Register type must be float type");
+	AnyValue result = {
+		.type = regtype,
+		.register_size_bytes = sizeof(__m256d),
+		.f256d = value,
+	};
+	return result;
+}
+
+AnyValue
+make_anyvalue_from_i128(__m128i value, RegisterType regtype)
+{
+	assert(regtype >= REGISTER_TYPE_S8 && regtype <= REGISTER_TYPE_U64 && "Register type must be integer type");
+	AnyValue result = {
+		.type = regtype,
+		.register_size_bytes = sizeof(__m128i),
+		.i128 = value,
+	};
+	return result;
+}
+
+AnyValue
+make_anyvalue_from_f128(__m128 value, RegisterType regtype)
+{
+	assert(regtype >= REGISTER_TYPE_F32 && regtype <= REGISTER_TYPE_F64 && "Register type must be float type");
+	AnyValue result = {
+		.type = regtype,
+		.register_size_bytes = sizeof(__m128),
+		.f128 = value,
+	};
+	return result;
+}
+
 // Push
 void
 simd_viewer_push(SimdViewer* simd_viewer, __m256i reg, RegisterType regtype)
 {
+	assert(regtype >= REGISTER_TYPE_S8 && regtype <= REGISTER_TYPE_U64 && "Register type must be integer type");
 	uint32_t index = simd_viewer->stack_index++;
 	uint32_t flags = simd_viewer->default_render_flags | simd_viewer->pushed_flags;
 	render_register(simd_viewer, line_position(index), make_anyvalue_from_i256(reg, regtype), flags);
@@ -520,29 +428,82 @@ simd_viewer_push(SimdViewer* simd_viewer, __m256i reg, RegisterType regtype)
 void 
 simd_viewer_push_bold(SimdViewer* simd_viewer, __m256i reg, RegisterType regtype)
 {
+	assert(regtype >= REGISTER_TYPE_S8 && regtype <= REGISTER_TYPE_U64 && "Register type must be integer type");
 	uint32_t index = simd_viewer->stack_index++;
 	uint32_t flags = simd_viewer->default_render_flags | simd_viewer->pushed_flags | SIMD_VIEWER_RENDER_BORDER;
 	render_register(simd_viewer, line_position(index), make_anyvalue_from_i256(reg, regtype), flags);
 }
 
 void
-simd_viewer_pushf(SimdViewer* simd_viewer, __m256 reg, FRegisterType regtype)
+simd_viewer_pushf(SimdViewer* simd_viewer, __m256 reg, RegisterType regtype)
 {
+	assert(regtype >= REGISTER_TYPE_F32 && regtype <= REGISTER_TYPE_F64 && "Register type must be float type");
 	uint32_t index = simd_viewer->stack_index++;
-	render_register256f(simd_viewer, line_position(index), reg, regtype);
+	uint32_t flags = simd_viewer->default_render_flags | simd_viewer->pushed_flags;
+	render_register(simd_viewer, line_position(index), make_anyvalue_from_f256(reg, regtype), flags);
+}
+
+void
+simd_viewer_pushd(SimdViewer* simd_viewer, __m256d reg, RegisterType regtype)
+{
+	assert(regtype >= REGISTER_TYPE_F32 && regtype <= REGISTER_TYPE_F64 && "Register type must be float type");
+	uint32_t index = simd_viewer->stack_index++;
+	uint32_t flags = simd_viewer->default_render_flags | simd_viewer->pushed_flags;
+	render_register(simd_viewer, line_position(index), make_anyvalue_from_f256d(reg, regtype), flags);
+}
+
+void
+simd_viewer_pushd_bold(SimdViewer* simd_viewer, __m256d reg, RegisterType regtype)
+{
+	assert(regtype >= REGISTER_TYPE_F32 && regtype <= REGISTER_TYPE_F64 && "Register type must be float type");
+	uint32_t index = simd_viewer->stack_index++;
+	uint32_t flags = simd_viewer->default_render_flags | simd_viewer->pushed_flags | SIMD_VIEWER_RENDER_BORDER;
+	render_register(simd_viewer, line_position(index), make_anyvalue_from_f256d(reg, regtype), flags);
 }
 
 void
 simd_viewer_pushf_bold(SimdViewer* simd_viewer, __m256 reg, FRegisterType regtype)
 {
+	assert(regtype >= REGISTER_TYPE_F32 && regtype <= REGISTER_TYPE_F64 && "Register type must be float type");
 	uint32_t index = simd_viewer->stack_index++;
-	render_register256f(simd_viewer, line_position(index), reg, regtype);
+	uint32_t flags = simd_viewer->default_render_flags | simd_viewer->pushed_flags | SIMD_VIEWER_RENDER_BORDER;
+	render_register(simd_viewer, line_position(index), make_anyvalue_from_f256(reg, regtype), flags);
 }
 
 void 
 simd_viewer_push128(SimdViewer* simd_viewer, __m128i reg, RegisterType regtype)
 {
+	assert(regtype >= REGISTER_TYPE_S8 && regtype <= REGISTER_TYPE_U64 && "Register type must be integer type");
+	uint32_t index = simd_viewer->stack_index++;
+	uint32_t flags = simd_viewer->default_render_flags | simd_viewer->pushed_flags;
+	render_register(simd_viewer, line_position(index), make_anyvalue_from_i128(reg, regtype), flags);
+}
 
+void 
+simd_viewer_push128f(SimdViewer* simd_viewer, __m128 reg, RegisterType regtype)
+{
+	assert(regtype >= REGISTER_TYPE_F32 && regtype <= REGISTER_TYPE_F64 && "Register type must be float type");
+	uint32_t index = simd_viewer->stack_index++;
+	uint32_t flags = simd_viewer->default_render_flags | simd_viewer->pushed_flags;
+	render_register(simd_viewer, line_position(index), make_anyvalue_from_f128(reg, regtype), flags);
+}
+
+void 
+simd_viewer_push128_bold(SimdViewer* simd_viewer, __m128i reg, RegisterType regtype)
+{
+	assert(regtype >= REGISTER_TYPE_S8 && regtype <= REGISTER_TYPE_U64 && "Register type must be integer type");
+	uint32_t index = simd_viewer->stack_index++;
+	uint32_t flags = simd_viewer->default_render_flags | simd_viewer->pushed_flags | SIMD_VIEWER_RENDER_BORDER;
+	render_register(simd_viewer, line_position(index), make_anyvalue_from_i128(reg, regtype), flags);
+}
+
+void 
+simd_viewer_push128f_bold(SimdViewer* simd_viewer, __m128 reg, RegisterType regtype)
+{
+	assert(regtype >= REGISTER_TYPE_F32 && regtype <= REGISTER_TYPE_F64 && "Register type must be float type");
+	uint32_t index = simd_viewer->stack_index++;
+	uint32_t flags = simd_viewer->default_render_flags | simd_viewer->pushed_flags | SIMD_VIEWER_RENDER_BORDER;
+	render_register(simd_viewer, line_position(index), make_anyvalue_from_f128(reg, regtype), flags);
 }
 
 void
