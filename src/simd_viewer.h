@@ -14,13 +14,15 @@
 
 typedef enum {
 	REGISTER_TYPE_NONE,
+	
 	REGISTER_TYPE_S8,
-	REGISTER_TYPE_U8,
 	REGISTER_TYPE_S16,
-	REGISTER_TYPE_U16,
 	REGISTER_TYPE_S32,
-	REGISTER_TYPE_U32,
 	REGISTER_TYPE_S64,
+
+	REGISTER_TYPE_U8,
+	REGISTER_TYPE_U16,
+	REGISTER_TYPE_U32,
 	REGISTER_TYPE_U64,
 } RegisterType;
 
@@ -31,7 +33,9 @@ typedef enum {
 } FRegisterType;
 
 typedef struct {
-	RegisterType type;
+	RegisterType type; // division type
+
+	uint32_t register_size_bytes;
 	union {
 		uint8_t  u8val;
 		int8_t   s8val;
@@ -41,8 +45,22 @@ typedef struct {
 		int32_t  s32val;
 		uint64_t u64val;
 		int64_t  s64val;
+		__m128i  i128;
+		__m128   f128;
+		__m128d  f128d;
+		__m256i  i256;
+		__m256   f256;
+		__m256d  f256d;
 	};
 } AnyValue;
+
+typedef struct {
+	int32_t  frame_index;
+	AnyValue frame_value;
+
+	int32_t  last_index;
+	AnyValue last_value;
+} ValueHovered;
 
 typedef uint32_t RenderFlag;
 
@@ -56,8 +74,7 @@ typedef struct {
 	RenderFlag default_render_flags;
 	RenderFlag pushed_flags;
 
-	AnyValue hovered;
-	AnyValue frame_hovered;
+	ValueHovered hovered;
 
 	uint32_t highlight_size;
 
@@ -75,6 +92,11 @@ void simd_viewer_push(SimdViewer* simd_viewer, __m256i reg, RegisterType regtype
 void simd_viewer_push_bold(SimdViewer* simd_viewer, __m256i reg, RegisterType regtype);
 void simd_viewer_push_operation(SimdViewer* simd_viewer, RegisterType regtype, const char* name);
 void simd_viewer_push_empty(SimdViewer* simd_viewer);
+
+void simd_viewer_pushf(SimdViewer* simd_viewer, __m256 reg, FRegisterType regtype);
+void simd_viewer_pushf_bold(SimdViewer* simd_viewer, __m256 reg, FRegisterType regtype);
+
+void simd_viewer_push128(SimdViewer* simd_viewer, __m128i reg, RegisterType regtype);
 
 void simd_viewer_push_highlighter(SimdViewer* simd_viewer);
 
