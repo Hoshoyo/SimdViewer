@@ -92,23 +92,6 @@ simd_movehdup(SimdViewer* sv)
 }
 
 void
-simd_multiply(SimdViewer* sv)
-{
-	simd_viewer_push_highlighter(sv);
-	
-	__m256i value0 = _mm256_set_epi8(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32);
-	simd_viewer_push(sv, value0, REGISTER_TYPE_U8);
-	__m256i value1 = _mm256_set_epi8(33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64);
-	simd_viewer_push(sv, value1, REGISTER_TYPE_U8);
-	__m256i value2 = _mm256_set_epi8(65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96);
-	simd_viewer_push(sv, value1, REGISTER_TYPE_U8);
-
-	__m256i result = _mm256_dpbssd_epi32(value0, value1, value2);
-	simd_viewer_push_operation(sv, REGISTER_TYPE_U32, "_mm256_dpbssd_epi32");
-	simd_viewer_push_bold(sv, result, REGISTER_TYPE_U8);
-}
-
-void
 simd_add_float256(SimdViewer* sv)
 {
 	simd_viewer_push_highlighter(sv);
@@ -189,7 +172,6 @@ int main()
 			//simd_compare(&sv);
 			//simd_average(&sv);
 			//simd_movehdup(&sv);
-			//simd_multiply(&sv);
 			//simd_compare_string(&sv);
 			simd_add_float256(&sv);
 			//simd_add_int128(&sv);

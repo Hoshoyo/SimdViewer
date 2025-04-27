@@ -1,54 +1,56 @@
 #include "simd_viewer.h"
+#include "simd_utils.h"
 #include <assert.h>
 
 #define ARRAY_LENGTH(A) (sizeof(A) / sizeof(*(A)))
+#define function static
 
-inline Vector2
+function Vector2
 vec2(float v)
 {
 	return (Vector2) { v, v };
 }
 
-inline int
+function inline int
 box_width(int byte_count)
 {
 	return (BYTE_SIZE + SPACING) * byte_count - SPACING;
 }
 
-inline const char*
+function const char*
 fmt_signed(bool hex)
 {
 	return (hex) ? "0x%x" : "%d";
 }
-inline const char*
+function const char*
 fmt_unsigned(bool hex)
 {
 	return (hex) ? "0x%x" : "%u";
 }
-inline const char*
+function const char*
 fmt_signed64(bool hex)
 {
 	return (hex) ? "0x%llx" : "%lld";
 }
-inline const char*
+function const char*
 fmt_unsigned64(bool hex)
 {
 	return (hex) ? "0x%llx" : "%llu";
 }
 
-inline bool
+function bool
 regtype_is_signed(RegisterType rtype)
 {
 	return rtype >= REGISTER_TYPE_S8 && rtype <= REGISTER_TYPE_S64;
 }
 
-inline bool
+function bool
 regtype_is_64bit(RegisterType rtype)
 {
 	return rtype == REGISTER_TYPE_S64 || rtype == REGISTER_TYPE_U64;
 }
 
-inline const char*
+function const char*
 fmt(bool hex, RegisterType rtype)
 {
 	if (hex)
@@ -64,7 +66,7 @@ fmt(bool hex, RegisterType rtype)
 	}
 }
 
-inline int
+function int
 regtype_to_bytesize(RegisterType regtype)
 {
 	switch (regtype)
@@ -79,13 +81,13 @@ regtype_to_bytesize(RegisterType regtype)
 	}
 }
 
-inline Vector2
+function Vector2
 line_position(int index)
 {
 	return (Vector2) { 20.0f, 20.0f + (float)((BYTE_SIZE + Y_SPACING) * index) };
 }
 
-Rectangle
+function Rectangle
 render_box_colored(Vector2 pos, int byte_size, Color color)
 {
 	Rectangle rect = {
@@ -98,13 +100,13 @@ render_box_colored(Vector2 pos, int byte_size, Color color)
 	return rect;
 }
 
-void
+function void
 render_linebox_colored(Vector2 pos, int byte_size, Color color)
 {
 	DrawRectangleLines((int)pos.x, (int)pos.y + 1, box_width(byte_size), BYTE_SIZE - 2, color);
 }
 
-Rectangle
+function Rectangle
 render_box(Vector2 pos, int byte_size)
 {
 	Color c = LIGHTGRAY;
@@ -112,7 +114,7 @@ render_box(Vector2 pos, int byte_size)
 	return render_box_colored(pos, byte_size, c);
 }
 
-Rectangle
+function Rectangle
 render_box_highlight(Vector2 pos, int byte_size, bool should_highlight)
 {
 	Color c = LIGHTGRAY;
@@ -125,21 +127,21 @@ render_box_highlight(Vector2 pos, int byte_size, bool should_highlight)
 	return render_box_colored(pos, byte_size, c);
 }
 
-void
+function void
 render_text_centered(Vector2 pos, Font font, const char* text, int width)
 {
 	Vector2 measure = MeasureTextEx(font, text, (float)font.baseSize, 0);
 	DrawTextEx(font, text, Vector2Add(pos, (Vector2) { width / 2 - measure.x / 2, BYTE_SIZE / 2 - measure.y / 2 }), (float)font.baseSize, 0, FONT_COLOR);
 }
 
-void
+function void
 render_text_rightalign(Vector2 pos, Font font, const char* text, int width)
 {
 	Vector2 measure = MeasureTextEx(font, text, (float)font.baseSize, 0);
 	DrawTextEx(font, text, Vector2Add(pos, (Vector2) { width - measure.x - 4, BYTE_SIZE / 2 - measure.y / 2 }), (float)font.baseSize, 0, FONT_COLOR);
 }
 
-const char*
+function const char*
 text_for_register_lane(AnyValue value, int32_t index, bool hex)
 {
 	const char* view_format = fmt(hex, value.type);
@@ -148,31 +150,31 @@ text_for_register_lane(AnyValue value, int32_t index, bool hex)
 		case 128: {
 			switch (value.type)
 			{
-				case REGISTER_TYPE_S8:  return TextFormat(view_format, value.i128.m128i_i8[index]);
-				case REGISTER_TYPE_S16: return TextFormat(view_format, value.i128.m128i_i16[index]);
-				case REGISTER_TYPE_S32: return TextFormat(view_format, value.i128.m128i_i32[index]);
-				case REGISTER_TYPE_S64: return TextFormat(view_format, value.i128.m128i_i64[index]);
-				case REGISTER_TYPE_U8:  return TextFormat(view_format, value.i128.m128i_u8[index]);
-				case REGISTER_TYPE_U16: return TextFormat(view_format, value.i128.m128i_u16[index]);
-				case REGISTER_TYPE_U32: return TextFormat(view_format, value.i128.m128i_u32[index]);
-				case REGISTER_TYPE_U64: return TextFormat(view_format, value.i128.m128i_u64[index]);
-				case REGISTER_TYPE_F32: return TextFormat("%f", value.f128.m128_f32[index]);
-				case REGISTER_TYPE_F64: return TextFormat("%f", value.f128d.m128d_f64[index]);
+				case REGISTER_TYPE_S8:  return TextFormat(view_format, simd_extract_s8_from_128(value.i128, index));
+				case REGISTER_TYPE_S16: return TextFormat(view_format, simd_extract_s16_from_128(value.i128, index));
+				case REGISTER_TYPE_S32: return TextFormat(view_format, simd_extract_s32_from_128(value.i128, index));
+				case REGISTER_TYPE_S64: return TextFormat(view_format, simd_extract_s64_from_128(value.i128, index));
+				case REGISTER_TYPE_U8:  return TextFormat(view_format, simd_extract_u8_from_128(value.i128, index));
+				case REGISTER_TYPE_U16: return TextFormat(view_format, simd_extract_u16_from_128(value.i128, index));
+				case REGISTER_TYPE_U32: return TextFormat(view_format, simd_extract_u32_from_128(value.i128, index));
+				case REGISTER_TYPE_U64: return TextFormat(view_format, simd_extract_u64_from_128(value.i128, index));
+				case REGISTER_TYPE_F32: return TextFormat("%f", simd_extract_f32_from_128(value.f128, index));
+				case REGISTER_TYPE_F64:	return TextFormat("%f", simd_extract_f64_from_128(value.f128d, index));
 			}
 		} break;
 		case 256: {
 			switch (value.type)
 			{
-				case REGISTER_TYPE_S8:  return TextFormat(view_format, value.i256.m256i_i8[index]);
-				case REGISTER_TYPE_S16: return TextFormat(view_format, value.i256.m256i_i16[index]);
-				case REGISTER_TYPE_S32: return TextFormat(view_format, value.i256.m256i_i32[index]);
-				case REGISTER_TYPE_S64: return TextFormat(view_format, value.i256.m256i_i64[index]);
-				case REGISTER_TYPE_U8:  return TextFormat(view_format, value.i256.m256i_u8[index]);
-				case REGISTER_TYPE_U16: return TextFormat(view_format, value.i256.m256i_u16[index]);
-				case REGISTER_TYPE_U32: return TextFormat(view_format, value.i256.m256i_u32[index]);
-				case REGISTER_TYPE_U64: return TextFormat(view_format, value.i256.m256i_u64[index]);
-				case REGISTER_TYPE_F32: return TextFormat("%f", value.f256.m256_f32[index]);
-				case REGISTER_TYPE_F64: return TextFormat("%f", value.f256d.m256d_f64[index]);
+				case REGISTER_TYPE_S8:  return TextFormat(view_format, simd_extract_s8_from_256(value.i256, index));
+				case REGISTER_TYPE_S16: return TextFormat(view_format, simd_extract_s16_from_256(value.i256, index));
+				case REGISTER_TYPE_S32: return TextFormat(view_format, simd_extract_s32_from_256(value.i256, index));
+				case REGISTER_TYPE_S64: return TextFormat(view_format, simd_extract_s64_from_256(value.i256, index));
+				case REGISTER_TYPE_U8:  return TextFormat(view_format, simd_extract_u8_from_256(value.i256, index));
+				case REGISTER_TYPE_U16: return TextFormat(view_format, simd_extract_u16_from_256(value.i256, index));
+				case REGISTER_TYPE_U32: return TextFormat(view_format, simd_extract_u32_from_256(value.i256, index));
+				case REGISTER_TYPE_U64: return TextFormat(view_format, simd_extract_u64_from_256(value.i256, index));
+				case REGISTER_TYPE_F32: return TextFormat("%f", simd_extract_f32_from_256(value.f256, index));
+				case REGISTER_TYPE_F64: return TextFormat("%f", simd_extract_f64_from_256(value.f256d, index));
 			}
 		} break;
 	}
@@ -180,46 +182,48 @@ text_for_register_lane(AnyValue value, int32_t index, bool hex)
 	return "";
 }
 
-#define EXTRACT_FUNCTION(TYPE, SIZE, SIGN)  inline TYPE          \
+#define CONCATENATE(prefix, name, suffix)   prefix ## name ## suffix
+#define EXTRACT_FUNCTION(TYPE, SIZE, SIGN)  function TYPE          \
 extract_##SIGN##SIZE(AnyValue value, int32_t index)              \
 {                                                                \
 	switch (value.register_size_bytes * 8)                       \
 	{                                                            \
-		case 128: return value.i128.m128i_##SIGN##SIZE[index];   \
-		case 256: return value.i256.m256i_##SIGN##SIZE[index];   \
+		case 128: return CONCATENATE(simd_extract_, SIGN##SIZE, _from_128)(value.i128, index);  \
+		case 256: return CONCATENATE(simd_extract_, SIGN##SIZE, _from_256)(value.i256, index);  \
+		default: assert(false);                                  \
 	}                                                            \
 }
 
-EXTRACT_FUNCTION(int8_t, 8, i)
+EXTRACT_FUNCTION(int8_t, 8, s)
 EXTRACT_FUNCTION(uint8_t, 8, u)
-EXTRACT_FUNCTION(int16_t, 16, i)
+EXTRACT_FUNCTION(int16_t, 16, s)
 EXTRACT_FUNCTION(uint16_t, 16, u)
-EXTRACT_FUNCTION(int32_t, 32, i)
+EXTRACT_FUNCTION(int32_t, 32, s)
 EXTRACT_FUNCTION(uint32_t, 32, u)
-EXTRACT_FUNCTION(int64_t, 64, i)
+EXTRACT_FUNCTION(int64_t, 64, s)
 EXTRACT_FUNCTION(uint64_t, 64, u)
 
-inline float
+function float
 extract_f32(AnyValue value, int32_t index)
 {
 	switch (value.register_size_bytes * 8)
 	{
-		case 128: return value.f128.m128_f32[index];
-		case 256: return value.f256.m256_f32[index];
+		case 128: return simd_extract_f32_from_128(value.f128, index);
+		case 256: return simd_extract_f32_from_256(value.f256, index);
 	}
 }
 
-inline double
+function double
 extract_f64(AnyValue value, int32_t index)
 {
 	switch (value.register_size_bytes * 8)
 	{
-		case 128: return value.f128d.m128d_f64[index];
-		case 256: return value.f256d.m256d_f64[index];
+		case 128: return simd_extract_f64_from_128(value.f128d, index);
+		case 256: return simd_extract_f64_from_256(value.f256d, index);
 	}
 }
 
-bool
+function bool
 same_value(AnyValue value, int32_t index, AnyValue compared, int32_t compared_index)
 {
 	if (value.type != compared.type)
@@ -227,13 +231,13 @@ same_value(AnyValue value, int32_t index, AnyValue compared, int32_t compared_in
 
 	switch (value.type)
 	{
-		case REGISTER_TYPE_S8: return extract_i8(value, index) == extract_i8(compared, compared_index);
+		case REGISTER_TYPE_S8: return extract_s8(value, index) == extract_s8(compared, compared_index);
 		case REGISTER_TYPE_U8: return extract_u8(value, index) == extract_u8(compared, compared_index);
-		case REGISTER_TYPE_S16: return extract_i16(value, index) == extract_i16(compared, compared_index);
+		case REGISTER_TYPE_S16: return extract_s16(value, index) == extract_s16(compared, compared_index);
 		case REGISTER_TYPE_U16: return extract_u16(value, index) == extract_u16(compared, compared_index);
-		case REGISTER_TYPE_S32: return extract_i32(value, index) == extract_i32(compared, compared_index);
+		case REGISTER_TYPE_S32: return extract_s32(value, index) == extract_s32(compared, compared_index);
 		case REGISTER_TYPE_U32: return extract_u32(value, index) == extract_u32(compared, compared_index);
-		case REGISTER_TYPE_S64: return extract_i64(value, index) == extract_i64(compared, compared_index);
+		case REGISTER_TYPE_S64: return extract_s64(value, index) == extract_s64(compared, compared_index);
 		case REGISTER_TYPE_U64: return extract_u64(value, index) == extract_u64(compared, compared_index);
 		case REGISTER_TYPE_F32: return extract_f32(value, index) == extract_f32(compared, compared_index);
 		case REGISTER_TYPE_F64: return extract_f64(value, index) == extract_f64(compared, compared_index);
@@ -242,7 +246,7 @@ same_value(AnyValue value, int32_t index, AnyValue compared, int32_t compared_in
 	return false;
 }
 
-ValueHovered
+function ValueHovered
 render_register(SimdViewer* sv, Vector2 pos, AnyValue any, RenderFlag flag)
 {
 	Font font = sv->font;
@@ -261,6 +265,11 @@ render_register(SimdViewer* sv, Vector2 pos, AnyValue any, RenderFlag flag)
 	for (int i = any.register_size_bytes / division_size - 1; i >= 0; --i)
 	{
 		bool same = same_value(any, i, sv->hovered.last_value, sv->hovered.last_index);
+		if(same)
+		{
+			printf("Same value: %d %d | %d %d\n", i, sv->hovered.last_index, extract_u8(any, i), extract_u8(sv->hovered.last_value, sv->hovered.last_index));
+		}
+
 		Rectangle boxrect = render_box_highlight(render_position, division_size, same);
 		render_text_rightalign(render_position, font, text_for_register_lane(any, i, flag & SIMD_VIEWER_RENDER_HEX), box_width(division_size));
 
@@ -288,34 +297,7 @@ render_register(SimdViewer* sv, Vector2 pos, AnyValue any, RenderFlag flag)
 	}
 }
 
-void
-render_register256f(SimdViewer* sv, Vector2 pos, __m256 x, FRegisterType rtype)
-{
-	Font font = sv->font;
-	switch (rtype)
-	{
-	case FREGISTER_TYPE_F32: {
-		for (int i = sizeof(__m256) / sizeof(float) - 1; i >= 0; --i)
-		{
-			render_box(pos, sizeof(float));
-			render_text_rightalign(pos, font, TextFormat("%.12f", x.m256_f32[i]), box_width(sizeof(float)));
-
-			pos = Vector2Add(pos, (Vector2) { (BYTE_SIZE + SPACING) * sizeof(float), 0 });
-		}
-	} break;
-	case FREGISTER_TYPE_F64: {
-		for (int i = sizeof(__m256d) / sizeof(double) - 1; i >= 0; --i)
-		{
-			render_box(pos, sizeof(double));
-			render_text_rightalign(pos, font, TextFormat("%.16f", (*(__m256d*) & x).m256d_f64[i]), box_width(sizeof(double)));
-
-			pos = Vector2Add(pos, (Vector2) { (BYTE_SIZE + SPACING) * sizeof(double), 0 });
-		}
-	} break;
-	}
-}
-
-void
+function void
 render_operation256(Font font, Vector2 pos, const char* description, int byte_size)
 {
 	Color redish = RED;
@@ -336,7 +318,7 @@ render_operation256(Font font, Vector2 pos, const char* description, int byte_si
 void 
 simd_viewer_init(SimdViewer* simd_viewer)
 {
-	simd_viewer->font = LoadFontEx("C:\\Windows\\Fonts\\consola.ttf", 20, 0, 1024);
+	simd_viewer->font = LoadFontEx("res/LiberationMono-Regular.ttf", 20, 0, 1024);
 	simd_viewer->default_render_flags = 0;
 	simd_viewer->stack_index = 0;
 	simd_viewer->highlight_size = 0;
@@ -355,7 +337,7 @@ simd_viewer_flush(SimdViewer* simd_viewer)
 	simd_viewer->hovered.frame_value = (AnyValue){ 0 };
 }
 
-AnyValue
+function AnyValue
 make_anyvalue_from_i256(__m256i value, RegisterType regtype)
 {
 	assert(regtype >= REGISTER_TYPE_S8 && regtype <= REGISTER_TYPE_U64 && "Register type must be integer type");
@@ -367,7 +349,7 @@ make_anyvalue_from_i256(__m256i value, RegisterType regtype)
 	return result;
 }
 
-AnyValue
+function AnyValue
 make_anyvalue_from_f256(__m256 value, RegisterType regtype)
 {
 	assert(regtype >= REGISTER_TYPE_F32 && regtype <= REGISTER_TYPE_F64 && "Register type must be float type");
@@ -379,7 +361,7 @@ make_anyvalue_from_f256(__m256 value, RegisterType regtype)
 	return result;
 }
 
-AnyValue
+function AnyValue
 make_anyvalue_from_f256d(__m256d value, RegisterType regtype)
 {
 	assert(regtype >= REGISTER_TYPE_F32 && regtype <= REGISTER_TYPE_F64 && "Register type must be float type");
@@ -391,7 +373,7 @@ make_anyvalue_from_f256d(__m256d value, RegisterType regtype)
 	return result;
 }
 
-AnyValue
+function AnyValue
 make_anyvalue_from_i128(__m128i value, RegisterType regtype)
 {
 	assert(regtype >= REGISTER_TYPE_S8 && regtype <= REGISTER_TYPE_U64 && "Register type must be integer type");
@@ -403,7 +385,7 @@ make_anyvalue_from_i128(__m128i value, RegisterType regtype)
 	return result;
 }
 
-AnyValue
+function AnyValue
 make_anyvalue_from_f128(__m128 value, RegisterType regtype)
 {
 	assert(regtype >= REGISTER_TYPE_F32 && regtype <= REGISTER_TYPE_F64 && "Register type must be float type");
