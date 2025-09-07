@@ -77,6 +77,8 @@ typedef struct {
 	RenderFlag default_render_flags;
 	RenderFlag pushed_flags;
 
+	Camera2D camera;
+
 	ValueHovered hovered;
 
 	uint32_t highlight_size;

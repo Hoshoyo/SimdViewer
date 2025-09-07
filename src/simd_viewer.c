@@ -251,7 +251,7 @@ render_register(SimdViewer* sv, Vector2 pos, AnyValue any, RenderFlag flag)
 {
 	Font font = sv->font;
 	uint32_t highlight_size = sv->highlight_size;
-	Vector2 mouse = GetMousePosition();
+	Vector2 mouse = GetScreenToWorld2D(GetMousePosition(), sv->camera);
 
 	if (flag & SIMD_VIEWER_RENDER_BORDER)
 	{
@@ -267,7 +267,7 @@ render_register(SimdViewer* sv, Vector2 pos, AnyValue any, RenderFlag flag)
 		bool same = same_value(any, i, sv->hovered.last_value, sv->hovered.last_index);
 		if(same)
 		{
-			printf("Same value: %d %d | %d %d\n", i, sv->hovered.last_index, extract_u8(any, i), extract_u8(sv->hovered.last_value, sv->hovered.last_index));
+			//printf("Same value: %d %d | %d %d\n", i, sv->hovered.last_index, extract_u8(any, i), extract_u8(sv->hovered.last_value, sv->hovered.last_index));
 		}
 
 		Rectangle boxrect = render_box_highlight(render_position, division_size, same);
@@ -505,7 +505,7 @@ void
 simd_viewer_push_highlighter(SimdViewer* simd_viewer)
 {
 	Color overlay = (Color){ 50, 50, 50, 50 };
-	Vector2 mouse = GetMousePosition();
+	Vector2 mouse = GetScreenToWorld2D(GetMousePosition(), simd_viewer->camera);
 
 	uint32_t index = simd_viewer->stack_index++;
 
